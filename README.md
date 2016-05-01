@@ -1,2 +1,2 @@
 # sudoku-ga
-Sudoku sover with Genetic Algorithm
+Sudoku solver with Genetic Algorithm
