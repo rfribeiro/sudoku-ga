@@ -10,6 +10,7 @@ CROSS_RATE = 0.7
 CROMO_NAME = 'cromossome'
 CROMO_FIT = 'fitness'
 CROMO_FIT_INV = -1
+CROMO_FIT_SOL = 0
 population = []
 
 #-----------------------------
@@ -76,7 +77,18 @@ def crossover_population(population):
 def mutation_population(population):
     return 0
 
+def found_solution(population):
+    return [p for p in population if p[CROMO_FIT]==CROMO_FIT_SOL]
+
+def print_sudoku(individual):
+    print("Found Solution")
+    print("Sudoku")
+    for i in range(N):
+        print(individual[CROMO_NAME][i*N:i*N+N])
+
+
 init_population(population)
+print_sudoku(population[0])
 fitness_population(population)
 for i in range(GENERATIONS_LEN):
     selection_population(population)
@@ -84,5 +96,9 @@ for i in range(GENERATIONS_LEN):
     mutation_population()
     fitness_population(population)
     # check result
+    s = found_solution(population)
+    if len(s) > 0:
+        print_sudoku(s[0])
+        break
 
 
