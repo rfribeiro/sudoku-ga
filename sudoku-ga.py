@@ -1,9 +1,10 @@
 from random import randint, random
 from collections import Counter
+from operator import itemgetter
 
 SLOT = 3
 N = SLOT*SLOT
-POP_LEN = 100
+POP_LEN = 4
 CROMO_LEN = N*N
 GENERATIONS_LEN = 1000
 MUTAT_RATE = 0.05
@@ -71,10 +72,58 @@ def fitness_cromossome(individual):
     #sum_similar = count_similar(individual)
     return sum_lines + sum_columns + sum_boxes
 
+def crossover_one_step(individual1, individual2):
+    p = randint(0,CROMO_LEN)
+    newindividual1 = individual1
+    newindividual2 = individual2
+    newindividual1[CROMO_FIT] = CROMO_FIT_INV
+    newindividual2[CROMO_FIT] = CROMO_FIT_INV
+    newindividual1[CROMO_NAME][:p] = individual2[CROMO_NAME][p:]
+    newindividual2[CROMO_NAME][:p] = individual1[CROMO_NAME][p:]
+    population.append(newindividual1)
+    population.append(newindividual2)
+
+def crossover_one_line(individual1, individual2):
+    p = randint(0,len(line_indexes))
+    newindividual1 = individual1
+    newindividual2 = individual2
+    newindividual1[CROMO_FIT] = CROMO_FIT_INV
+    newindividual2[CROMO_FIT] = CROMO_FIT_INV
+    for i in line_indexes[p]:
+        newindividual1[CROMO_NAME][i]=individual2[CROMO_NAME][i]
+        newindividual2[CROMO_NAME][i]=individual1[CROMO_NAME][i]
+    population.append(newindividual1)
+    population.append(newindividual2)
+
+def crossover_one_column(individual1, individual2):
+    p = randint(0,len(column_indexes))
+    newindividual1 = individual1
+    newindividual2 = individual2
+    newindividual1[CROMO_FIT] = CROMO_FIT_INV
+    newindividual2[CROMO_FIT] = CROMO_FIT_INV
+    for i in column_indexes[p]:
+        newindividual1[CROMO_NAME][i]=individual2[CROMO_NAME][i]
+        newindividual2[CROMO_NAME][i]=individual1[CROMO_NAME][i]
+    population.append(newindividual1)
+    population.append(newindividual2)
+
+def crossover_one_box(individual1, individual2):
+    p = randint(0,len(box_indexes))
+    newindividual1 = individual1
+    newindividual2 = individual2
+    newindividual1[CROMO_FIT] = CROMO_FIT_INV
+    newindividual2[CROMO_FIT] = CROMO_FIT_INV
+    for i in box_indexes[p]:
+        newindividual1[CROMO_NAME][i]=individual2[CROMO_NAME][i]
+        newindividual2[CROMO_NAME][i]=individual1[CROMO_NAME][i]
+    population.append(newindividual1)
+    population.append(newindividual2)
+
 # crossover two individuals
 def crossover_cromossome(individual1, individual2):
-    newindividual = individual1 # TODO need to change it only for test
-    newindividual[CROMO_FIT] = CROMO_FIT_INV
+    crossover_one_step(individual1, individual2)
+    crossover_one_line(individual1, individual2)
+    crossover_one_column(individual1, individual2)
 
 def mutation_swap(individual):
     p1 = randint(0,CROMO_LEN)
@@ -92,7 +141,6 @@ def mutation_cromossome(individual):
     mutation_new_value(individual)
     mutation_swap(individual)
     individual[CROMO_FIT] = CROMO_FIT_INV
-    return 0
 
 #-----------------------------
 # population functions
@@ -107,17 +155,21 @@ def init_population(population):
 
 # select population individuals
 def selection_population(population):
-    return 0
+    sorted(population, key=itemgetter(CROMO_FIT))
 
 # crossover individuals randomly
 def crossover_population(population):
-    if random() <= CROSS_RATE: # do crossover
-        crossover_cromossome(population[randint(1,POP_LEN)], population[randint(1,POP_LEN)])
+    for i in range(0,len(population)):
+        r = random()
+        if r <= CROSS_RATE: # do crossover
+            crossover_cromossome(population[randint(1,POP_LEN)], population[randint(1,POP_LEN)])
 
 # mutation individuals randomly
 def mutation_population(population):
-    if random() <= MUTAT_RATE: # do mutation
-        mutation_cromossome(population[randint(1,POP_LEN)])
+    for i in range(0,len(population)):
+        r = random()
+        if r <= MUTAT_RATE: # do mutation
+            mutation_cromossome(population[randint(1,POP_LEN)])
 
 def found_solution(population):
     return [p for p in population if p[CROMO_FIT]==CROMO_FIT_SOL]
@@ -128,15 +180,12 @@ def print_sudoku(individual):
     for i in range(N):
         print(individual[CROMO_NAME][i*N:i*N+N])
 
-print_sudoku(sample)
-fitness_cromossome(sample)
-
 init_population(population)
 fitness_population(population)
 for i in range(GENERATIONS_LEN):
     selection_population(population)
-    crossover_population()
-    mutation_population()
+    crossover_population(population)
+    mutation_population(population)
     fitness_population(population)
     # check result
     s = found_solution(population)
