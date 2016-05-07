@@ -6,16 +6,16 @@ SLOT = 3
 N = SLOT*SLOT
 POP_LEN = 100
 CROMO_LEN = N*N
-GENERATIONS_LEN = 1000
-MUTAT_RATE = 0.1
+GENERATIONS_LEN = 10000
+MUTAT_RATE = 0.4
 CROSS_RATE = 0.9
 CROMO_NAME = 'cromossome'
 CROMO_FIT = 'fitness'
 CROMO_FIT_INV = -1
 CROMO_FIT_SOL = 0
-BEST_K_PERCENTAGE = 0.1
-WORST_K_PERCENTAGE = 0.2
-TOURNAMENT_PERCENTAGE = 0.7
+BEST_K_PERCENTAGE = 0.2
+WORST_K_PERCENTAGE = 0.0
+TOURNAMENT_PERCENTAGE = 0.8
 BEST_K_SELECTION = int(POP_LEN * BEST_K_PERCENTAGE)
 WORST_K_SELECTION = int(POP_LEN * WORST_K_PERCENTAGE)
 TOURNAMENT_SELECTION = int(POP_LEN * TOURNAMENT_PERCENTAGE)
@@ -35,7 +35,7 @@ box_indexes = [[0,1,2,9,10,11,18,19,20], # TODO programmatically
                [57,58,59,66,67,68,75,76,77],
                [60,61,62,69,70,71,78,79,80]]
 
-sample = { 'cromossome':[   1, 2, 3,  4, 5, 6,  7, 8, 9,
+sample = { CROMO_NAME:[   1, 2, 3,  4, 5, 6,  7, 8, 9,
                            11,12,13, 14,15,16, 17,18,19,
                            21,22,23, 24,25,26, 27,28,29,
 
@@ -46,17 +46,28 @@ sample = { 'cromossome':[   1, 2, 3,  4, 5, 6,  7, 8, 9,
                            61,62,63, 64,65,66, 67,68,69,
                            71,72,73, 74,75,76, 77,78,79,
                            81,82,83, 84,85,86, 87,88,89]}
+solved = { CROMO_NAME : [ 8,7,1,4,5,3,9,2,6,
+                            9,5,3,7,2,6,4,8,1,
+                            2,4,6,8,9,1,5,3,7,
+                            7,6,5,3,8,9,1,4,2,
+                            1,3,2,5,4,7,8,6,9,
+                            4,9,8,1,6,2,7,5,3,
+                            6,8,7,9,3,5,2,1,4,
+                            5,2,9,6,1,4,3,7,8,
+                            3,1,4,2,7,8,6,9,5],
+           CROMO_FIT:-1}
 #-----------------------------
 # Utility functions
 #-----------------------------
 # count similar itens in a list
 def count_similars(item):
-    h = len([dup for (dup, i) in Counter(item).items() if i > 1])
+    g = [i for (dup, i) in Counter(item).items() if i > 1]
+    h = sum(g)
     return h
 
 # count similar itens in same line
 def count_line(individual):
-    h = sum([count_similars(individual[CROMO_NAME][i*N:i*N+N]) for i in range(0,N)])
+    h=sum([count_similars([individual[CROMO_NAME][l] for l in x]) for x in line_indexes])
     return h
 
 # count similar itens in same column
@@ -151,10 +162,18 @@ def mutation_new_value(individual):
     newindividual[CROMO_FIT] = CROMO_FIT_INV
     population.append(newindividual)
 
+def mutation_multi_values(individual):
+    newindividual = individual.copy()
+    for i in range(0,randint(0,CROMO_LEN-1)):
+        newindividual[CROMO_NAME][randint(0,CROMO_LEN-1)] = randint(1,N)
+    newindividual[CROMO_FIT] = CROMO_FIT_INV
+    population.append(newindividual)
+
 # mutate individual
 def mutation_cromossome(individual):
     mutation_new_value(individual)
     mutation_swap(individual)
+    mutation_multi_values(individual)
 
 
 #-----------------------------
@@ -184,7 +203,7 @@ def selection_population(population):
     newpopulation = []
     spopulation = sorted(population, key=itemgetter(CROMO_FIT))
     newpopulation.extend(spopulation[:BEST_K_SELECTION])
-    newpopulation.extend(spopulation[-WORST_K_SELECTION:])
+    #newpopulation.extend(spopulation[-WORST_K_SELECTION:])
     newpopulation.extend(selection_tournament(population))
 
     return newpopulation, [spopulation[0][CROMO_FIT], spopulation[-1][CROMO_FIT], sum(d[CROMO_FIT] for d in population) / len(population)]
@@ -215,8 +234,11 @@ def print_sudoku(individual):
 init_population(population)
 fitness_population(population)
 for i in range(GENERATIONS_LEN):
+    #print('Population 1 : ' + str(len(population)))
     crossover_population(population)
+    #print('Population 2 : ' + str(len(population)))
     mutation_population(population)
+    #print('Population 3 : ' + str(len(population)))
     fitness_population(population)
     population, statistics = selection_population(population)
     print('Iteration ' + str(i) + ', Best: ' + str(statistics[0]) + ', Worst: ' + str(statistics[1]) + ', Average: ' + str(statistics[2]))
