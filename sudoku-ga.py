@@ -5,10 +5,10 @@ from operator import itemgetter, attrgetter
 
 SLOT = 3
 N = SLOT*SLOT
-POP_LEN = 1000
+POP_LEN = 100
 CROMO_LEN = N*N
 GENERATIONS_LEN = 10000
-MUTAT_RATE = 0.4
+MUTAT_RATE = 0.2
 CROSS_RATE = 0.90
 CROMO_NAME = 'cromossome'
 CROMO_FIT = 'fitness'
@@ -20,7 +20,7 @@ TOURNAMENT_PERCENTAGE = 0.99
 BEST_K_SELECTION = int(POP_LEN * BEST_K_PERCENTAGE)
 WORST_K_SELECTION = int(POP_LEN * WORST_K_PERCENTAGE)
 TOURNAMENT_SELECTION = int(POP_LEN * TOURNAMENT_PERCENTAGE)
-TOURNAMENT_SIZE = 8
+TOURNAMENT_SIZE = 5
 
 population = []
 
@@ -36,10 +36,10 @@ box_indexes = [[0,1,2,9,10,11,18,19,20], # TODO programmatically
                [57,58,59,66,67,68,75,76,77],
                [60,61,62,69,70,71,78,79,80]]
 
-box_indexes = [[0,1,4,5], # TODO programmatically
-               [2,3,6,7],
-               [8,9,12,13],
-               [10,11,14,15]]
+#box_indexes = [[0,1,4,5], # TODO programmatically
+#               [2,3,6,7],
+#               [8,9,12,13],
+#               [10,11,14,15]]
 
 sample_test = { CROMO_NAME:[   1, 2, 3,  4, 5, 6,  7, 8, 9,
                            11,12,13, 14,15,16, 17,18,19,
@@ -62,9 +62,21 @@ solved = { CROMO_NAME : [ 8,7,1,4,5,3,9,2,6,
                             5,2,9,6,1,4,3,7,8,
                             3,1,4,2,7,8,6,9,5],
            CROMO_FIT:-1}
+
+list_indexes = range(0, N)
+list_values = range(1,N+1)
+
+CROMO_FIT_SOL = (3*N*N*(N-1))/2
+
 #-----------------------------
 # Utility functions
 #-----------------------------
+# count similar itens in a list
+def count_values(item):
+    g = [1 for i in list_indexes for j in list_indexes if item[i]!=item[j]]
+    h = sum(g)
+    return h
+
 # count similar itens in a list
 def count_differents(item):
     g = [i for (dup, i) in Counter(item).items() if i == 1]
@@ -78,30 +90,54 @@ def count_similars(item):
     return h
 
 # count similar itens in same line
-def count_line(individual):
+def count_line_similars(individual):
     h=sum([count_similars([individual[CROMO_NAME][l] for l in x]) for x in line_indexes])
     return h
 
 # count similar itens in same column
-def count_column(individual):
+def count_column_similars(individual):
     h=sum([count_similars([individual[CROMO_NAME][l] for l in x]) for x in column_indexes])
     return h
 
 # count similar itens in same box
-def count_box(individual):
+def count_box_similars(individual):
     h=sum([count_similars([individual[CROMO_NAME][l] for l in x]) for x in box_indexes])
+    return h
+
+def count_line_values(individual):
+    h=sum([count_values([individual[CROMO_NAME][l] for l in x]) for x in line_indexes])
+    return h
+
+# count similar itens in same column
+def count_column_values(individual):
+    h=sum([count_values([individual[CROMO_NAME][l] for l in x]) for x in column_indexes])
+    return h
+
+# count similar itens in same box
+def count_box_values(individual):
+    h=sum([count_values([individual[CROMO_NAME][l] for l in x]) for x in box_indexes])
     return h
 
 #-----------------------------
 # Individuals functions
 #-----------------------------
 # calculate fitness from individual
-def fitness_cromossome(individual):
-    sum_lines = count_line(individual)
-    sum_columns = count_column(individual)
-    sum_boxes = count_box(individual)
+def fitness_cromossome_sum(individual):
+    sum_lines = count_line_similars(individual)
+    sum_columns = count_column_similars(individual)
+    sum_boxes = count_box_similars(individual)
     #sum_similar = count_similar(individual)
     return sum_lines + sum_columns + sum_boxes
+
+def fitness_cromossome_sum_of_sum(individual):
+    sum_lines = count_line_values(individual)
+    sum_columns = count_column_values(individual)
+    sum_boxes = count_box_values(individual)
+    #sum_similar = count_similar(individual)
+    return (sum_lines + sum_columns + sum_boxes)/2
+
+def fitness_cromossome(individual):
+    return fitness_cromossome_sum_of_sum(individual)
 
 def crossover_one_point(individual1, individual2):
     p = randint(0,CROMO_LEN-1)
@@ -155,7 +191,7 @@ def crossover_one_box(individual1, individual2):
 def crossover_cromossome(individual1, individual2):
     #crossover_one_point(individual1, individual2)
     crossover_one_line(individual1, individual2)
-    #crossover_one_column(individual1, individual2)
+    crossover_one_column(individual1, individual2)
 
 def mutation_change(individual):
     newindividual = copy.deepcopy(individual)
@@ -265,9 +301,14 @@ def init_population_with_constraint(population):
         [i.extend(sample(values, len(values))) for x in range(N)]
         population.append({CROMO_NAME:i, CROMO_FIT:CROMO_FIT_INV})
 
+
 # init random population
-def init_population(population):
+def init_population_random(population):
     [population.append({CROMO_NAME:[randint(1,N) for x in range(CROMO_LEN)], CROMO_FIT:CROMO_FIT_INV}) for i in range(POP_LEN)]
+
+def init_population(population):
+    #init_population_random(population)
+    init_population_with_constraint(population)
 
 def selection_tournament(population):
     newpopulation = []
@@ -275,20 +316,19 @@ def selection_tournament(population):
         individual = population[randint(0,POP_LEN-1)].copy()
         for r in range(1,TOURNAMENT_SIZE):
             individual1 = population[randint(0,POP_LEN-1)]
-            if (individual[CROMO_FIT] > individual1[CROMO_FIT]):
-                individual = individual.copy()
+            if (individual[CROMO_FIT] < individual1[CROMO_FIT]):
+                individual = individual1.copy()
         newpopulation.append(individual)
     return newpopulation
 
 # select population individuals
 def selection_population(population):
     newpopulation = []
-    spopulation = sorted(population, key=itemgetter(CROMO_FIT))
+    spopulation = sorted(population, key=itemgetter(CROMO_FIT), reverse=True)
     #print(str(spopulation[0][CROMO_NAME]))
     newpopulation.extend(spopulation[:BEST_K_SELECTION])
     #newpopulation.extend(spopulation[-WORST_K_SELECTION:])
     newpopulation.extend(selection_tournament(population))
-
     return newpopulation, [spopulation[0][CROMO_FIT], spopulation[-1][CROMO_FIT], sum(d[CROMO_FIT] for d in population) / len(population)]
 
 # crossover individuals randomly
@@ -317,8 +357,9 @@ def print_sudoku(individual):
     for i in range(N):
         print(individual[CROMO_NAME][i*N:i*N+N])
 
-#init_population(population)
-init_population_with_constraint(population)
+bestValue = 0
+restartCount = 0
+init_population(population)
 fitness_population(population)
 for i in range(GENERATIONS_LEN):
     #print('Population 1 : ' + str(len(population)))
@@ -335,5 +376,18 @@ for i in range(GENERATIONS_LEN):
     if len(s) > 0:
         print_sudoku(s[0])
         break
+    else:
+        if bestValue == population[0][CROMO_FIT]:
+            restartCount = restartCount + 1
+        else:
+            restartCount = 0
+            bestValue = population[0][CROMO_FIT]
+
+    if restartCount == 100:
+        restartCount = 0
+        population = []
+        init_population(population)
+
+
 
 
