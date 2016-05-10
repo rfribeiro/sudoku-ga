@@ -168,16 +168,27 @@ def mutation_change(individual):
     newindividual[CROMO_FIT] = CROMO_FIT_INV
     population.append(newindividual)
 
-def mutation_swap(individual):
+def mutation_swap_2(individual):
     newindividual = copy.deepcopy(individual)
     i = randint(0, len(line_indexes)-1)
     idx1 = randint(0,N-1)
     idx2 = randint(0,N-1)
     if idx1 != idx2:
-        v1 = newindividual[CROMO_NAME][line_indexes[i][idx1]]
-        v2 = newindividual[CROMO_NAME][line_indexes[i][idx2]]
-        newindividual[CROMO_NAME][line_indexes[i][idx1]] = v2
-        newindividual[CROMO_NAME][line_indexes[i][idx2]] = v1
+        newindividual[CROMO_NAME][line_indexes[i][idx1]] = individual[CROMO_NAME][line_indexes[i][idx2]]
+        newindividual[CROMO_NAME][line_indexes[i][idx2]] = individual[CROMO_NAME][line_indexes[i][idx1]]
+        newindividual[CROMO_FIT] = CROMO_FIT_INV
+        population.append(newindividual)
+
+def mutation_swap_3(individual):
+    newindividual = copy.deepcopy(individual)
+    i = randint(0, len(line_indexes)-1)
+    idx1 = randint(0,N-1)
+    idx2 = randint(0,N-1)
+    idx3 = randint(0,N-1)
+    if idx1 != idx2:
+        newindividual[CROMO_NAME][line_indexes[i][idx1]] = individual[CROMO_NAME][line_indexes[i][idx3]]
+        newindividual[CROMO_NAME][line_indexes[i][idx2]] = individual[CROMO_NAME][line_indexes[i][idx1]]
+        newindividual[CROMO_NAME][line_indexes[i][idx3]] = individual[CROMO_NAME][line_indexes[i][idx2]]
         newindividual[CROMO_FIT] = CROMO_FIT_INV
         population.append(newindividual)
 
@@ -233,7 +244,8 @@ def mutation_cromossome(individual):
     #mutation_new_value(individual)
     #mutation_change(individual)
     #mutation_multi_values(individual)
-    mutation_swap(individual)
+    mutation_swap_2(individual)
+    mutation_swap_3(individual)
     mutation_swap_line(individual)
     mutation_swap_column(individual)
 
