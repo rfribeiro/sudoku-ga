@@ -1,45 +1,10 @@
-import copy
+import copy, math
 from random import randint, random, sample
 from collections import Counter
 from operator import itemgetter, attrgetter
 
-SLOT = 3
-N = SLOT*SLOT
-POP_LEN = 100
-CROMO_LEN = N*N
-GENERATIONS_LEN = 10000
-MUTAT_RATE = 0.2
-CROSS_RATE = 0.90
 CROMO_NAME = 'cromossome'
 CROMO_FIT = 'fitness'
-CROMO_FIT_INV = -1
-CROMO_FIT_SOL = 0
-BEST_K_PERCENTAGE = 0.01
-WORST_K_PERCENTAGE = 0.0
-TOURNAMENT_PERCENTAGE = 0.99
-BEST_K_SELECTION = int(POP_LEN * BEST_K_PERCENTAGE)
-WORST_K_SELECTION = int(POP_LEN * WORST_K_PERCENTAGE)
-TOURNAMENT_SELECTION = int(POP_LEN * TOURNAMENT_PERCENTAGE)
-TOURNAMENT_SIZE = 5
-
-population = []
-
-line_indexes = [[N1*N+N2 for N2 in range(0,N)] for N1 in range(0,N)]
-column_indexes = [[N1+N*N2 for N2 in range(0,N)] for N1 in range(0,N)]
-box_indexes = [[0,1,2,9,10,11,18,19,20], # TODO programmatically
-               [3,4,5,12,13,14,21,22,23],
-               [6,7,8,15,16,17,24,25,26],
-               [27,28,29,36,37,38,45,46,47],
-               [30,31,32,39,40,41,48,49,50],
-               [33,34,35,42,43,44,51,52,53],
-               [54,55,56,63,64,65,72,73,74],
-               [57,58,59,66,67,68,75,76,77],
-               [60,61,62,69,70,71,78,79,80]]
-
-#box_indexes = [[0,1,4,5], # TODO programmatically
-#               [2,3,6,7],
-#               [8,9,12,13],
-#               [10,11,14,15]]
 
 sample_test = { CROMO_NAME:[   1, 2, 3,  4, 5, 6,  7, 8, 9,
                            11,12,13, 14,15,16, 17,18,19,
@@ -61,12 +26,70 @@ solved = { CROMO_NAME : [ 8,7,1,4,5,3,9,2,6,
                             6,8,7,9,3,5,2,1,4,
                             5,2,9,6,1,4,3,7,8,
                             3,1,4,2,7,8,6,9,5],
-           CROMO_FIT:-1}
+                      CROMO_FIT:-1}
+
+SLOT = 3
+N = SLOT*SLOT
+POP_LEN = 1000
+CROMO_LEN = N*N
+GENERATIONS_LEN = 10000
+MUTAT_RATE = 0.1
+CROSS_RATE = 0.90
+CROMO_FIT_INV = -1
+CROMO_FIT_SOL = 0
+BEST_K_PERCENTAGE = 0.01
+WORST_K_PERCENTAGE = 0.0
+TOURNAMENT_PERCENTAGE = 0.99
+BEST_K_SELECTION = int(POP_LEN * BEST_K_PERCENTAGE)
+WORST_K_SELECTION = int(POP_LEN * WORST_K_PERCENTAGE)
+TOURNAMENT_SELECTION = int(POP_LEN * TOURNAMENT_PERCENTAGE)
+TOURNAMENT_SIZE = 5
+
+population = []
+
+line_indexes = [[N1*N+N2 for N2 in range(0,N)] for N1 in range(0,N)]
+column_indexes = [[N1+N*N2 for N2 in range(0,N)] for N1 in range(0,N)]
+
+if SLOT == 2:
+    box_indexes = [[0,1,4,5], # TODO programmatically
+                   [2,3,6,7],
+                   [8,9,12,13],
+                  [10,11,14,15]]
+else:
+    box_indexes = [[0,1,2,9,10,11,18,19,20], # TODO programmatically
+                   [3,4,5,12,13,14,21,22,23],
+                   [6,7,8,15,16,17,24,25,26],
+                   [27,28,29,36,37,38,45,46,47],
+                   [30,31,32,39,40,41,48,49,50],
+                   [33,34,35,42,43,44,51,52,53],
+                   [54,55,56,63,64,65,72,73,74],
+                   [57,58,59,66,67,68,75,76,77],
+                   [60,61,62,69,70,71,78,79,80]]
 
 list_indexes = range(0, N)
 list_values = range(1,N+1)
 
-CROMO_FIT_SOL = (3*N*N*(N-1))/2
+CROMO_FIT_SOL_DEFINED = (3*N*N*(N-1))/2
+
+if SLOT == 2:
+    given_cromossome = [1,0,0,0,
+                        2,0,0,0,
+                        3,0,0,1,
+                        4,0,0,0]
+    given_cromossome = [0,0,3,0,
+                        0,4,0,0,
+                        0,0,0,2,
+                        4,0,1,0]
+else:
+    given_cromossome = [  0, 3, 6, 0, 5, 0, 9, 7, 0,
+                          5, 0, 9, 2, 0, 1, 0, 0, 3,
+                          0, 1, 0, 0, 6, 9, 8, 2, 0,
+                          4, 0, 8, 7, 0, 3, 0, 0, 5,
+                          0, 2, 0, 9, 6, 0, 7, 0, 8,
+                          7, 0, 3, 0, 8, 0, 0, 4, 2,
+                          0, 0, 7, 5, 0, 9, 3, 1, 2,
+                          3, 9, 0, 0, 0, 7, 0, 0, 6,
+                          0, 5, 4, 0, 3, 6, 0, 0, 8]
 
 #-----------------------------
 # Utility functions
@@ -121,6 +144,50 @@ def count_box_values(individual):
 #-----------------------------
 # Individuals functions
 #-----------------------------
+def fitness_calculated(individual):
+    phenotype = individual[CROMO_NAME]
+
+    size = len(phenotype)
+
+    symbols = list_values
+
+    rowsSumDistance = [0] * N
+    colsSumDistance = [0] * N
+
+    rowsPrdDistance = [1] * N
+    colsPrdDistance = [1] * N
+
+    rowsMissed = [0] * N
+    colsMissed = [0] * N
+
+    symbolsSum = sum(symbols)
+    symbolsFac = math.factorial(len(symbols))
+    symbolsSet = set(symbols)
+
+    for i in range(N):
+        for j in range(len(line_indexes)):
+            rowsSumDistance[i] += phenotype[line_indexes[i][j]]
+            rowsPrdDistance[i] *= phenotype[line_indexes[i][j]]
+
+            colsSumDistance[i] += phenotype[column_indexes[i][j]]
+            colsPrdDistance[i] *= phenotype[column_indexes[i][j]]
+
+        rowsSumDistance[i] = abs(symbolsSum - rowsSumDistance[i])
+        rowsPrdDistance[i] = abs(symbolsFac - rowsPrdDistance[i])
+
+        colsSumDistance[i] = abs(symbolsSum - colsSumDistance[i])
+        colsPrdDistance[i] = abs(symbolsFac - colsPrdDistance[i])
+
+        rowsMissed[i] = len(list(symbolsSet - set([phenotype[l] for l in line_indexes[i]])))
+        colsMissed[i] = len(list(symbolsSet - set([phenotype[l] for l in column_indexes[i]])))
+
+    rootsColsPrd = [math.sqrt(i) for i in colsPrdDistance]
+    rootsRowsPrd = [math.sqrt(i) for i in rowsPrdDistance]
+
+    return (10 * (sum(rowsSumDistance) + sum(colsSumDistance)) \
+                             + 50 * (sum(rowsMissed) + sum(colsMissed)) \
+                             + sum(rootsColsPrd) + sum(rootsRowsPrd))
+
 # calculate fitness from individual
 def fitness_cromossome_sum(individual):
     sum_lines = count_line_similars(individual)
@@ -134,7 +201,7 @@ def fitness_cromossome_sum_of_sum(individual):
     sum_columns = count_column_values(individual)
     sum_boxes = count_box_values(individual)
     #sum_similar = count_similar(individual)
-    return (sum_lines + sum_columns + sum_boxes)/2
+    return CROMO_FIT_SOL_DEFINED -((sum_lines + sum_columns + sum_boxes)/2)
 
 def fitness_cromossome(individual):
     return fitness_cromossome_sum_of_sum(individual)
@@ -145,9 +212,8 @@ def crossover_one_point(individual1, individual2):
     newindividual2 = copy.deepcopy(individual2)
     newindividual1[CROMO_FIT] = CROMO_FIT_INV
     newindividual2[CROMO_FIT] = CROMO_FIT_INV
-    for i in range(p, CROMO_LEN-1):
-        newindividual1[CROMO_NAME][i] = individual2[CROMO_NAME][i]
-        newindividual2[CROMO_NAME][i] = individual1[CROMO_NAME][i]
+    newindividual1[CROMO_NAME] = individual1[CROMO_NAME][:p] + individual2[CROMO_NAME][p:]
+    newindividual2[CROMO_NAME] = individual2[CROMO_NAME][:p] + individual1[CROMO_NAME][p:]
     population.append(newindividual1)
     population.append(newindividual2)
 
@@ -193,80 +259,82 @@ def crossover_cromossome(individual1, individual2):
     crossover_one_line(individual1, individual2)
     crossover_one_column(individual1, individual2)
 
-def mutation_change(individual):
+def mutation_swap_allele(individual):
     newindividual = copy.deepcopy(individual)
     p1 = randint(0,CROMO_LEN-1)
     p2 = randint(0,CROMO_LEN-1)
-    v1 = newindividual[CROMO_NAME][p1]
-    v2 = newindividual[CROMO_NAME][p2]
-    newindividual[CROMO_NAME][p1] = v2
-    newindividual[CROMO_NAME][p2] = v1
-    newindividual[CROMO_FIT] = CROMO_FIT_INV
-    population.append(newindividual)
+    if p1 != p2 \
+            and given_cromossome[p1] == 0 \
+            and given_cromossome[p2] == 0:
+        v1 = newindividual[CROMO_NAME][p1]
+        v2 = newindividual[CROMO_NAME][p2]
+        newindividual[CROMO_NAME][p1] = v2
+        newindividual[CROMO_NAME][p2] = v1
+        newindividual[CROMO_FIT] = CROMO_FIT_INV
+        population.append(newindividual)
 
-def mutation_swap_2(individual):
+def mutation_swap_2_line(individual):
     newindividual = copy.deepcopy(individual)
     i = randint(0, len(line_indexes)-1)
     idx1 = randint(0,N-1)
     idx2 = randint(0,N-1)
-    if idx1 != idx2:
+    if idx1 != idx2 \
+            and given_cromossome[line_indexes[i][idx1]] == 0 \
+            and given_cromossome[line_indexes[i][idx2]] == 0:
         newindividual[CROMO_NAME][line_indexes[i][idx1]] = individual[CROMO_NAME][line_indexes[i][idx2]]
         newindividual[CROMO_NAME][line_indexes[i][idx2]] = individual[CROMO_NAME][line_indexes[i][idx1]]
         newindividual[CROMO_FIT] = CROMO_FIT_INV
         population.append(newindividual)
 
-def mutation_swap_3(individual):
+def mutation_swap_3_line(individual):
     newindividual = copy.deepcopy(individual)
     i = randint(0, len(line_indexes)-1)
     idx1 = randint(0,N-1)
     idx2 = randint(0,N-1)
     idx3 = randint(0,N-1)
-    if idx1 != idx2:
+    if idx1 != idx2 != idx3 \
+            and given_cromossome[line_indexes[i][idx1]] == 0 \
+            and given_cromossome[line_indexes[i][idx2]] == 0  \
+            and given_cromossome[line_indexes[i][idx3]] == 0:
         newindividual[CROMO_NAME][line_indexes[i][idx1]] = individual[CROMO_NAME][line_indexes[i][idx3]]
         newindividual[CROMO_NAME][line_indexes[i][idx2]] = individual[CROMO_NAME][line_indexes[i][idx1]]
         newindividual[CROMO_NAME][line_indexes[i][idx3]] = individual[CROMO_NAME][line_indexes[i][idx2]]
         newindividual[CROMO_FIT] = CROMO_FIT_INV
         population.append(newindividual)
 
-def mutation_swap_inline(individual):
-    newindividual = copy.deepcopy(individual)
-    l = randint(0, len(line_indexes)-1)
-    idx1 = randint(1, SLOT-1)
-    idx2 = randint(0, SLOT-1)
-    if (idx1 != idx2):
-        for i in xrange(SLOT):
-            newindividual[CROMO_NAME][line_indexes[l][i*idx1]] = individual[CROMO_NAME][line_indexes[l][i*idx2]]
-            newindividual[CROMO_NAME][line_indexes[l][i]] = individual[CROMO_NAME][line_indexes[l][i]]
-        newindividual[CROMO_FIT] = CROMO_FIT_INV
-        population.append(newindividual)
-
-def mutation_swap_line(individual):
+def mutation_swap_lines(individual):
     newindividual = copy.deepcopy(individual)
     idx1 = randint(0, len(line_indexes)-1)
     idx2 = randint(0, len(line_indexes)-1)
     if (idx1 != idx2):
         for i in xrange(len(line_indexes)):
-            newindividual[CROMO_NAME][line_indexes[idx1][i]] = individual[CROMO_NAME][line_indexes[idx2][i]]
-            newindividual[CROMO_NAME][line_indexes[idx2][i]] = individual[CROMO_NAME][line_indexes[idx1][i]]
+            if  given_cromossome[line_indexes[idx1][i]] == 0 \
+                    and given_cromossome[line_indexes[idx2][i]] == 0:
+                newindividual[CROMO_NAME][line_indexes[idx1][i]] = individual[CROMO_NAME][line_indexes[idx2][i]]
+                newindividual[CROMO_NAME][line_indexes[idx2][i]] = individual[CROMO_NAME][line_indexes[idx1][i]]
         newindividual[CROMO_FIT] = CROMO_FIT_INV
         population.append(newindividual)
 
-def mutation_swap_column(individual):
+def mutation_swap_columns(individual):
     newindividual = copy.deepcopy(individual)
     idx1 = randint(0, len(column_indexes)-1)
     idx2 = randint(0, len(column_indexes)-1)
     if (idx1 != idx2):
         for i in xrange(len(column_indexes)):
-            newindividual[CROMO_NAME][column_indexes[idx1][i]] = individual[CROMO_NAME][column_indexes[idx2][i]]
-            newindividual[CROMO_NAME][column_indexes[idx2][i]] = individual[CROMO_NAME][column_indexes[idx1][i]]
+            if  given_cromossome[line_indexes[idx1][i]] == 0 \
+                    and given_cromossome[line_indexes[idx2][i]] == 0:
+                newindividual[CROMO_NAME][column_indexes[idx1][i]] = individual[CROMO_NAME][column_indexes[idx2][i]]
+                newindividual[CROMO_NAME][column_indexes[idx2][i]] = individual[CROMO_NAME][column_indexes[idx1][i]]
         newindividual[CROMO_FIT] = CROMO_FIT_INV
         population.append(newindividual)
 
 def mutation_new_value(individual):
     newindividual = copy.deepcopy(individual)
-    newindividual[CROMO_NAME][randint(0,CROMO_LEN-1)] = randint(1,N)
-    newindividual[CROMO_FIT] = CROMO_FIT_INV
-    population.append(newindividual)
+    p = randint(0,CROMO_LEN-1)
+    if  given_cromossome[p] == 0:
+        newindividual[CROMO_NAME][p] = randint(1,N)
+        newindividual[CROMO_FIT] = CROMO_FIT_INV
+        population.append(newindividual)
 
 def mutation_multi_values(individual):
     newindividual = copy.deepcopy(individual)
@@ -277,13 +345,13 @@ def mutation_multi_values(individual):
 
 # mutate individual
 def mutation_cromossome(individual):
-    #mutation_new_value(individual)
-    #mutation_change(individual)
+    mutation_new_value(individual)
+    #mutation_bit_wise(individual)
     #mutation_multi_values(individual)
-    mutation_swap_2(individual)
-    mutation_swap_3(individual)
-    mutation_swap_line(individual)
-    mutation_swap_column(individual)
+    mutation_swap_2_line(individual)
+    mutation_swap_3_line(individual)
+    mutation_swap_lines(individual)
+    mutation_swap_columns(individual)
 
 
 #-----------------------------
@@ -291,7 +359,7 @@ def mutation_cromossome(individual):
 #-----------------------------
 # calcule fitness of all individuals from population
 def fitness_population(population):
-    [p.update({CROMO_FIT:fitness_cromossome(p)}) for p in population if p[CROMO_FIT]==CROMO_FIT_INV]
+    [p.update({CROMO_FIT:fitness_cromossome(p)}) for p in population if p[CROMO_FIT]==CROMO_FIT_INV or p[CROMO_FIT]==None]
 
 # init random population
 def init_population_with_constraint(population):
@@ -301,6 +369,13 @@ def init_population_with_constraint(population):
         [i.extend(sample(values, len(values))) for x in range(N)]
         population.append({CROMO_NAME:i, CROMO_FIT:CROMO_FIT_INV})
 
+def init_population_random_with_given_cromossome(population):
+    for i in range(POP_LEN):
+        cromossome = copy.deepcopy(given_cromossome)
+        for x in range(CROMO_LEN):
+            if cromossome[x]==0:
+                cromossome[x] = randint(1,N)
+        population.append({CROMO_NAME:cromossome, CROMO_FIT:CROMO_FIT_INV})
 
 # init random population
 def init_population_random(population):
@@ -308,7 +383,8 @@ def init_population_random(population):
 
 def init_population(population):
     #init_population_random(population)
-    init_population_with_constraint(population)
+    #init_population_with_constraint(population)
+    init_population_random_with_given_cromossome(population)
 
 def selection_tournament(population):
     newpopulation = []
@@ -316,7 +392,7 @@ def selection_tournament(population):
         individual = population[randint(0,POP_LEN-1)].copy()
         for r in range(1,TOURNAMENT_SIZE):
             individual1 = population[randint(0,POP_LEN-1)]
-            if (individual[CROMO_FIT] < individual1[CROMO_FIT]):
+            if (individual[CROMO_FIT] > individual1[CROMO_FIT]):
                 individual = individual1.copy()
         newpopulation.append(individual)
     return newpopulation
@@ -324,7 +400,7 @@ def selection_tournament(population):
 # select population individuals
 def selection_population(population):
     newpopulation = []
-    spopulation = sorted(population, key=itemgetter(CROMO_FIT), reverse=True)
+    spopulation = sorted(population, key=itemgetter(CROMO_FIT))
     #print(str(spopulation[0][CROMO_NAME]))
     newpopulation.extend(spopulation[:BEST_K_SELECTION])
     #newpopulation.extend(spopulation[-WORST_K_SELECTION:])
