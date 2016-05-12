@@ -1,5 +1,5 @@
 import copy, math
-from random import randint, random, sample
+from random import randint, random, sample, shuffle
 from collections import Counter
 from operator import itemgetter, attrgetter
 
@@ -33,8 +33,8 @@ N = SLOT*SLOT
 POP_LEN = 200
 CROMO_LEN = N*N
 GENERATIONS_LEN = 10000
-MUTAT_RATE = 0.3
-CROSS_RATE = 0.90
+MUTAT_RATE = 0.01
+CROSS_RATE = 0.95
 CROMO_FIT_INV = -1
 CROMO_FIT_SOL = 0
 BEST_K_PERCENTAGE = 0.01
@@ -43,8 +43,8 @@ TOURNAMENT_PERCENTAGE = 0.99
 BEST_K_SELECTION = int(POP_LEN * BEST_K_PERCENTAGE)
 WORST_K_SELECTION = int(POP_LEN * WORST_K_PERCENTAGE)
 TOURNAMENT_SELECTION = int(POP_LEN * TOURNAMENT_PERCENTAGE)
-TOURNAMENT_SIZE = 3
-RESTART_VALUE = 500
+TOURNAMENT_SIZE = 4
+RESTART_VALUE = 150
 
 population = []
 
@@ -77,10 +77,10 @@ if SLOT == 2:
                         2,0,0,0,
                         3,0,0,1,
                         4,0,0,0]
-    given_cromossome = [0,0,3,0,
-                        0,4,0,0,
-                        0,0,0,2,
-                        4,0,1,0]
+    #given_cromossome = [0,0,3,0,
+    #                    0,4,0,0,
+    #                    0,0,0,2,
+    #                    4,0,1,0]
 else:
     given_cromossome = [  0, 3, 6, 0, 5, 0, 9, 7, 0,
                           5, 0, 9, 2, 0, 1, 0, 0, 3,
@@ -91,6 +91,16 @@ else:
                           0, 0, 7, 5, 0, 9, 3, 1, 2,
                           3, 9, 0, 0, 0, 7, 0, 0, 6,
                           0, 5, 4, 0, 3, 6, 0, 0, 8]
+
+    #given_cromossome = [  0, 0, 0, 0, 0, 0, 0, 0, 0,
+    #                      0, 0, 0, 0, 0, 0, 0, 0, 0,
+    #                      0, 0, 0, 0, 0, 0, 0, 0, 0,
+    #                      0, 0, 0, 0, 0, 0, 0, 0, 0,
+    #                      0, 0, 0, 0, 0, 0, 0, 0, 0,
+    #                      0, 0, 0, 0, 0, 0, 0, 0, 0,
+    #                      0, 0, 0, 0, 0, 0, 0, 0, 0,
+    #                      0, 0, 0, 0, 0, 0, 0, 0, 0,
+    #                      0, 0, 0, 0, 0, 0, 0, 0, 0]
 
 #-----------------------------
 # Utility functions
@@ -207,6 +217,19 @@ def fitness_cromossome_sum_of_sum(individual):
 def fitness_cromossome(individual):
     return fitness_cromossome_sum_of_sum(individual)
 
+def crossover_uniform(population, individual1, individual2):
+    newindividual1 = {CROMO_NAME:[0]*CROMO_LEN, CROMO_FIT:CROMO_FIT_INV}
+    newindividual2 = {CROMO_NAME:[0]*CROMO_LEN, CROMO_FIT:CROMO_FIT_INV}
+    for i in range(CROMO_LEN):
+        if random() < 0.5:
+            newindividual1[CROMO_NAME][i] = individual1[CROMO_NAME][i]
+            newindividual2[CROMO_NAME][i] = individual2[CROMO_NAME][i]
+        else:
+            newindividual1[CROMO_NAME][i] = individual2[CROMO_NAME][i]
+            newindividual2[CROMO_NAME][i] = individual1[CROMO_NAME][i]
+    population.append(newindividual1)
+    population.append(newindividual2)
+
 def crossover_one_point(population, individual1, individual2):
     p = randint(0,CROMO_LEN-1)
     newindividual1 = copy.deepcopy(individual1)
@@ -215,6 +238,32 @@ def crossover_one_point(population, individual1, individual2):
     newindividual2[CROMO_FIT] = CROMO_FIT_INV
     newindividual1[CROMO_NAME] = individual1[CROMO_NAME][:p] + individual2[CROMO_NAME][p:]
     newindividual2[CROMO_NAME] = individual2[CROMO_NAME][:p] + individual1[CROMO_NAME][p:]
+    population.append(newindividual1)
+    population.append(newindividual2)
+
+def crossover_uniform_line(population, individual1, individual2):
+    newindividual1 = {CROMO_NAME:[0]*CROMO_LEN, CROMO_FIT:CROMO_FIT_INV}
+    newindividual2 = {CROMO_NAME:[0]*CROMO_LEN, CROMO_FIT:CROMO_FIT_INV}
+    for i in range(N):
+        if random() < 0.5:
+            newindividual1[CROMO_NAME][i*N:i*N+N] = individual1[CROMO_NAME][i*N:i*N+N]
+            newindividual2[CROMO_NAME][i*N:i*N+N] = individual2[CROMO_NAME][i*N:i*N+N]
+        else:
+            newindividual1[CROMO_NAME][i*N:i*N+N] = individual2[CROMO_NAME][i*N:i*N+N]
+            newindividual2[CROMO_NAME][i*N:i*N+N] = individual1[CROMO_NAME][i*N:i*N+N]
+    population.append(newindividual1)
+    population.append(newindividual2)
+
+def crossover_uniform_column(population, individual1, individual2):
+    newindividual1 = {CROMO_NAME:[0]*CROMO_LEN, CROMO_FIT:CROMO_FIT_INV}
+    newindividual2 = {CROMO_NAME:[0]*CROMO_LEN, CROMO_FIT:CROMO_FIT_INV}
+    for i in range(N):
+        if random() < 0.5:
+            newindividual1[CROMO_NAME][i::N] = individual1[CROMO_NAME][i::N]
+            newindividual2[CROMO_NAME][i::N] = individual2[CROMO_NAME][i::N]
+        else:
+            newindividual1[CROMO_NAME][i::N] = individual2[CROMO_NAME][i::N]
+            newindividual2[CROMO_NAME][i::N] = individual1[CROMO_NAME][i::N]
     population.append(newindividual1)
     population.append(newindividual2)
 
@@ -257,9 +306,20 @@ def crossover_one_box(population, individual1, individual2):
 # crossover two individuals
 def crossover_cromossome(population, individual1, individual2):
     #crossover_one_point(population, individual1, individual2)
+    crossover_uniform(population, individual1, individual2)
+    crossover_uniform_line(population, individual1, individual2)
+    crossover_uniform_column(population, individual1, individual2)
+
     crossover_one_line(population, individual1, individual2)
     #crossover_one_column(population, individual1, individual2)
-    #crossover_one_box(population, individual1, individual2)
+    crossover_one_box(population, individual1, individual2)
+
+def mutation_reset(individual):
+    cromossome = copy.deepcopy(given_cromossome)
+    for x in range(CROMO_LEN):
+        if cromossome[x]==0:
+            cromossome[x] = randint(1,N)
+    population.append({CROMO_NAME:cromossome, CROMO_FIT:CROMO_FIT_INV})
 
 def mutation_swap_allele(individual):
     newindividual = copy.deepcopy(individual)
@@ -330,7 +390,7 @@ def mutation_swap_columns(individual):
         newindividual[CROMO_FIT] = CROMO_FIT_INV
         population.append(newindividual)
 
-def mutation_new_value(individual):
+def mutation_bit_wise(individual):
     newindividual = copy.deepcopy(individual)
     p = randint(0,CROMO_LEN-1)
     if  given_cromossome[p] == 0:
@@ -347,7 +407,8 @@ def mutation_multi_values(individual):
 
 # mutate individual
 def mutation_cromossome(individual):
-    mutation_new_value(individual)
+    mutation_reset(individual)
+    mutation_bit_wise(individual)
     #mutation_bit_wise(individual)
     #mutation_multi_values(individual)
     mutation_swap_2_line(individual)
@@ -362,6 +423,18 @@ def mutation_cromossome(individual):
 # calcule fitness of all individuals from population
 def fitness_population(population):
     [p.update({CROMO_FIT:fitness_cromossome(p)}) for p in population if p[CROMO_FIT]==CROMO_FIT_INV or p[CROMO_FIT]==None]
+
+def init_population_with_constraint_with_given_cromossome(population):
+    values = range(1,N+1)
+    for z in range(POP_LEN):
+        ind = []
+        for x in range(N):
+            ind = copy.deepcopy(given_cromossome[x*N:x*N+N])
+            missing = list(set(list_values) - set(given_cromossome[x*N:x*N+N]))
+            random.shuffle(missing)
+            indexes = [i for i, x in enumerate() if x == 0]
+
+        population.append({CROMO_NAME:ind, CROMO_FIT:CROMO_FIT_INV})
 
 # init random population
 def init_population_with_constraint(population):
@@ -411,20 +484,61 @@ def selection_population(population):
 
 # crossover individuals randomly
 def crossover_population(population):
-    for i in range(0,len(population)):
-        r = random()
-        if r <= CROSS_RATE: # do crossover
-            r1 = randint(0,POP_LEN-1)
-            r2 = randint(0,POP_LEN-1)
-            #print(r1,r2, len(population))
-            crossover_cromossome(population, population[r1], population[r2])
+    [crossover_cromossome(population, population[randint(0,POP_LEN-1)], population[randint(0,POP_LEN-1)]) \
+     for i in range(0,len(population)) \
+     if random() <= CROSS_RATE]
+
 
 # mutation individuals randomly
 def mutation_population(population):
-    for i in range(0,len(population)):
-        r = random()
-        if r <= MUTAT_RATE: # do mutation
-            mutation_cromossome(population[randint(0,POP_LEN-1)])
+    [mutation_cromossome(population[randint(0,POP_LEN-1)]) \
+     for i in range(0,len(population)) \
+     if random() <= MUTAT_RATE]
+
+
+def remove_duplicates_lines(population):
+    r_CROMO_LEN = range(CROMO_LEN)
+    r_N = range(N)
+    for p in population:
+        for i in r_N:
+            content_idx = r_CROMO_LEN[i*N:i*N+N]
+            content_value = p[CROMO_NAME][i*N:i*N+N]
+            missings = list(set(list_values)-set(content_value))
+            if missings:
+                repetitions = []
+                [repetitions.append(idx) for idx,item in enumerate(content_value) \
+                 if (item in content_value[:idx] or item in content_value[idx+1:]) and (given_cromossome[content_idx[idx]] == 0)]
+                for r in repetitions:
+                    if missings:
+                        shuffle(missings)
+                        if missings[-1] not in content_value:
+                            p[CROMO_NAME][content_idx[r]]  = missings.pop()
+                    else:
+                        break
+
+def remove_duplicates_columns(population):
+    r_CROMO_LEN = range(CROMO_LEN)
+    r_N = range(N)
+    for p in population:
+        for i in r_N:
+            content_idx = r_CROMO_LEN[i::N]
+            content_value = p[CROMO_NAME][i::N]
+            missings = list(set(list_values)-set(content_value))
+            if missings:
+                repetitions = []
+                [repetitions.append(idx) for idx,item in enumerate(content_value) \
+                 if (item in content_value[:idx] or item in content_value[idx+1:]) and (given_cromossome[content_idx[idx]] == 0)]
+                for r in repetitions:
+                    if missings:
+                        shuffle(missings)
+                        if missings[-1] not in content_value:
+                            p[CROMO_NAME][content_idx[r]]  = missings.pop()
+                    else:
+                        break
+
+def remove_duplicates(population):
+    remove_duplicates_lines(population)
+    remove_duplicates_columns(population)
 
 def found_solution(population):
     return [p for p in population if p[CROMO_FIT]==CROMO_FIT_SOL]
@@ -438,6 +552,7 @@ def print_sudoku(individual):
 bestValue = 0
 restartCount = 0
 init_population(population)
+remove_duplicates(population)
 fitness_population(population)
 for i in range(GENERATIONS_LEN):
     #print('Population 1 : ' + str(len(population)))
@@ -445,6 +560,7 @@ for i in range(GENERATIONS_LEN):
     #print('Population 2 : ' + str(len(population)))
     mutation_population(population)
     #print('Population 3 : ' + str(len(population)))
+    remove_duplicates(population)
     fitness_population(population)
     population, statistics = selection_population(population)
     print('Iteration ' + str(i) + ', Best: ' + str(statistics[0]) + ', Worst: ' + str(statistics[1]) + ', Average: ' + str(statistics[2]))
