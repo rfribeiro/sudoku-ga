@@ -407,8 +407,10 @@ def mutation_rotate(individual):
     xorValue = 0
     for point in points:
         xorValue ^= newindividual[CROMO_NAME][idx*N+point]
-
     newindividual[CROMO_NAME][idx*N+points[0]] = xorValue
+
+    newindividual[CROMO_FIT] = CROMO_FIT_INV
+    population.append(newindividual)
 
 def mutation_swap_allele(individual):
     newindividual = copy.deepcopy(individual)
@@ -691,7 +693,7 @@ def sudoku_solver(times, idx, param):
             population = []
             init_population(population)
 
-idx = 3
+idx = -1
 params = parameters[idx]
 
 POP_LEN = params[POPULATION]
