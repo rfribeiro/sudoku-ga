@@ -27,7 +27,7 @@ except (ImportError) as error:
 
 
 parameters = {
-	'populationSize': 1000,
+	'populationSize': 500,
 
 	'mutationProbability': 0.012,
 

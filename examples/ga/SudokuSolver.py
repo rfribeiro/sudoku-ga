@@ -322,7 +322,8 @@ class Population(SizeExtension):
 		self.tournamentSize = tournamentSize
 
 		self.strongest = None
-
+		self.weekest= None
+		self.average = None
 		self.parents = []
 		self.childs = []
 
@@ -339,6 +340,8 @@ class Population(SizeExtension):
 
 	def resolved(self):
 		self.strongest = min(self.parents, key = lambda o: o.fitness)
+		self.weekest = max(self.parents, key = lambda o: o.fitness)
+		#self.average = sum([parent. for parent in self.parents])/self.size
 
 		return (self.strongest.fitness == 0)
 
@@ -350,6 +353,12 @@ class Population(SizeExtension):
 
 	def fitnessOfStrongest(self):
 		return self.strongest.fitness
+
+	def fitnessOfWeakest(self):
+		return self.weekest.fitness
+
+	def fitnessOfAverage(self):
+		return 0#self.average
 
 	def reproduced(self):
 		return (len(self.childs) >= len(self.parents))
@@ -417,7 +426,7 @@ class SudokuGA(object):
 			self.population.generation()
 			self.population.elitism()
 
-			print self.population.fitnessOfStrongest()
+			print self.population.fitnessOfStrongest(), self.population.fitnessOfWeakest(), self.population.fitnessOfAverage()
 
 			while (not self.population.reproduced()):
 				mother = self.population.select()

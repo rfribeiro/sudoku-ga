@@ -33,36 +33,29 @@ GENERATIONS = 'generation'
 MUTATION_PROB = 'mutation_prop'
 CROSSOVER_PROB = 'crossover_prop'
 TOURNAMENT = 'tournament'
+FITNESS_F = 'fitness'
+SUM_OF_SUM = 'sum_of_sum'
+CALCULATED = 'calculated'
+REMOVE_DUP = 'remove_dup'
+INIT_POP = 'init_pop'
+CONSTRAINT = 'constraint'
+RANDOM = 'random'
 
-parameters = [{POPULATION:1000, GENERATIONS:1000, MUTATION_PROB:0.3, CROSSOVER_PROB:0.6, TOURNAMENT:5},
-              {POPULATION:1000, GENERATIONS:1000, MUTATION_PROB:0.2, CROSSOVER_PROB:0.6, TOURNAMENT:5},
-              {POPULATION:1000, GENERATIONS:1000, MUTATION_PROB:0.1, CROSSOVER_PROB:0.6, TOURNAMENT:5},
-              {POPULATION:1000, GENERATIONS:1000, MUTATION_PROB:0.08, CROSSOVER_PROB:0.6, TOURNAMENT:5},
-              {POPULATION:1000, GENERATIONS:1000, MUTATION_PROB:0.05, CROSSOVER_PROB:0.6, TOURNAMENT:5},
-              {POPULATION:1000, GENERATIONS:1000, MUTATION_PROB:0.01, CROSSOVER_PROB:0.6, TOURNAMENT:5},
-
-              {POPULATION:1000, GENERATIONS:1000, MUTATION_PROB:0.3, CROSSOVER_PROB:0.7, TOURNAMENT:5},
-              {POPULATION:1000, GENERATIONS:1000, MUTATION_PROB:0.2, CROSSOVER_PROB:0.7, TOURNAMENT:5},
-              {POPULATION:1000, GENERATIONS:1000, MUTATION_PROB:0.1, CROSSOVER_PROB:0.7, TOURNAMENT:5},
-              {POPULATION:1000, GENERATIONS:1000, MUTATION_PROB:0.08, CROSSOVER_PROB:0.7, TOURNAMENT:5},
-              {POPULATION:1000, GENERATIONS:1000, MUTATION_PROB:0.05, CROSSOVER_PROB:0.7, TOURNAMENT:5},
-              {POPULATION:1000, GENERATIONS:1000, MUTATION_PROB:0.01, CROSSOVER_PROB:0.7, TOURNAMENT:5},
-
-              {POPULATION:1000, GENERATIONS:1000, MUTATION_PROB:0.3, CROSSOVER_PROB:0.8, TOURNAMENT:5},
-              {POPULATION:1000, GENERATIONS:1000, MUTATION_PROB:0.2, CROSSOVER_PROB:0.8, TOURNAMENT:5},
-              {POPULATION:1000, GENERATIONS:1000, MUTATION_PROB:0.1, CROSSOVER_PROB:0.8, TOURNAMENT:5},
-              {POPULATION:1000, GENERATIONS:1000, MUTATION_PROB:0.08, CROSSOVER_PROB:0.8, TOURNAMENT:5},
-              {POPULATION:1000, GENERATIONS:1000, MUTATION_PROB:0.05, CROSSOVER_PROB:0.8, TOURNAMENT:5},
-              {POPULATION:1000, GENERATIONS:1000, MUTATION_PROB:0.01, CROSSOVER_PROB:0.8, TOURNAMENT:5},
-
-              {POPULATION:1000, GENERATIONS:1000, MUTATION_PROB:0.3, CROSSOVER_PROB:0.9, TOURNAMENT:5},
-              {POPULATION:1000, GENERATIONS:1000, MUTATION_PROB:0.2, CROSSOVER_PROB:0.9, TOURNAMENT:5},
-              {POPULATION:1000, GENERATIONS:1000, MUTATION_PROB:0.1, CROSSOVER_PROB:0.9, TOURNAMENT:5},
-              {POPULATION:1000, GENERATIONS:1000, MUTATION_PROB:0.08, CROSSOVER_PROB:0.9, TOURNAMENT:5},
-              {POPULATION:1000, GENERATIONS:1000, MUTATION_PROB:0.05, CROSSOVER_PROB:0.9, TOURNAMENT:5},
-              {POPULATION:1000, GENERATIONS:1000, MUTATION_PROB:0.01, CROSSOVER_PROB:0.9, TOURNAMENT:5},
-              ]
 SLOT = 3
+
+if SLOT == 3:
+    parameters = [{POPULATION:4000, GENERATIONS:1000, MUTATION_PROB:0.01, CROSSOVER_PROB:0.95, TOURNAMENT:5, FITNESS_F:CALCULATED, REMOVE_DUP:False, INIT_POP:CONSTRAINT},
+              {POPULATION:4000, GENERATIONS:1000, MUTATION_PROB:0.01, CROSSOVER_PROB:0.95, TOURNAMENT:5, FITNESS_F:CALCULATED, REMOVE_DUP:True, INIT_POP:CONSTRAINT},
+              {POPULATION:4000, GENERATIONS:1000, MUTATION_PROB:0.3, CROSSOVER_PROB:0.3, TOURNAMENT:5, FITNESS_F:CALCULATED, REMOVE_DUP:False, INIT_POP:CONSTRAINT},
+              {POPULATION:4000, GENERATIONS:1000, MUTATION_PROB:0.3, CROSSOVER_PROB:0.3, TOURNAMENT:5, FITNESS_F:CALCULATED, REMOVE_DUP:True, INIT_POP:CONSTRAINT},]
+
+else:
+    parameters = [{POPULATION:250, GENERATIONS:500, MUTATION_PROB:0.01, CROSSOVER_PROB:0.95, TOURNAMENT:3, FITNESS_F:CALCULATED, REMOVE_DUP:False, INIT_POP:RANDOM},
+              {POPULATION:50, GENERATIONS:500, MUTATION_PROB:0.01, CROSSOVER_PROB:0.95, TOURNAMENT:3, FITNESS_F:CALCULATED, REMOVE_DUP:True, INIT_POP:RANDOM},
+              {POPULATION:250, GENERATIONS:500, MUTATION_PROB:0.3, CROSSOVER_PROB:0.5, TOURNAMENT:3, FITNESS_F:CALCULATED, REMOVE_DUP:False, INIT_POP:RANDOM},
+              {POPULATION:50, GENERATIONS:500, MUTATION_PROB:0.3, CROSSOVER_PROB:0.5, TOURNAMENT:3, FITNESS_F:CALCULATED, REMOVE_DUP:True, INIT_POP:RANDOM},]
+
+
 N = SLOT*SLOT
 POP_LEN = 10
 CROMO_LEN = N*N
@@ -73,9 +66,9 @@ CROMO_FIT_INV = -1
 CROMO_FIT_SOL = 0
 BEST_K_PERCENTAGE = 0.01
 WORST_K_PERCENTAGE = 0.00
-TOURNAMENT_PERCENTAGE = 0.99
+TOURNAMENT_PERCENTAGE = 1
 TOURNAMENT_SIZE = 5
-RESTART_VALUE = 250
+RESTART_VALUE = 100
 
 BEST_K_SELECTION = int(POP_LEN * BEST_K_PERCENTAGE)
 WORST_K_SELECTION = int(POP_LEN * WORST_K_PERCENTAGE)
@@ -85,6 +78,8 @@ population = []
 
 line_indexes = [[N1*N+N2 for N2 in range(0,N)] for N1 in range(0,N)]
 column_indexes = [[N1+N*N2 for N2 in range(0,N)] for N1 in range(0,N)]
+
+fitness_calls = 0
 
 if SLOT == 2:
     box_indexes = [[0,1,4,5], # TODO programmatically
@@ -121,15 +116,25 @@ if SLOT == 2:
                         0,0,0,0,
                        0,0,0,0]
 else:
-    given_cromossome = [  0, 3, 6, 0, 5, 0, 9, 7, 0,
-                          5, 0, 9, 2, 0, 1, 0, 0, 3,
-                          0, 1, 0, 0, 6, 9, 8, 2, 0,
-                          4, 0, 8, 7, 0, 3, 0, 0, 5,
-                          0, 2, 0, 9, 6, 0, 7, 0, 8,
-                          7, 0, 3, 0, 8, 0, 0, 4, 2,
-                          0, 0, 7, 5, 0, 9, 3, 1, 2,
-                          3, 9, 0, 0, 0, 7, 0, 0, 6,
+    given_cromossome = [  2, 0, 0, 8, 0, 4, 0, 7, 1,
+                          5, 8, 9, 0, 0, 1, 0, 0, 3,
+                          0, 1, 7, 3, 6, 0, 0, 2, 0,
+                          0, 6, 0, 0, 2, 3, 1, 9, 0,
+                          0, 2, 5, 9, 0, 0, 7, 0, 8,
+                          7, 0, 3, 0, 8, 1, 6, 0, 0,
+                          6, 0, 0, 5, 4, 0, 0, 1, 2,
+                          3, 9, 0, 0, 1, 0, 4, 5, 0,
                           0, 5, 4, 0, 3, 6, 0, 0, 8]
+
+    #given_cromossome = [  2, 3, 6, 0, 5, 0, 9, 7, 0,
+    #                      5, 0, 9, 2, 0, 1, 0, 0, 3,
+    #                      0, 1, 0, 0, 6, 9, 8, 2, 0,
+    #                      4, 0, 8, 7, 0, 3, 0, 0, 5,
+    #                      0, 2, 0, 9, 6, 0, 7, 0, 8,
+    #                      7, 0, 3, 0, 8, 0, 0, 4, 2,
+    #                      0, 0, 7, 5, 4, 9, 3, 1, 2,
+    #                      3, 9, 0, 1, 0, 7, 0, 0, 6,
+    #                      1, 5, 4, 0, 3, 6, 0, 0, 8]
 
     given_cromossome = [  0, 0, 0, 0, 0, 0, 0, 0, 0,
                           0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -139,7 +144,7 @@ else:
                           0, 0, 0, 0, 0, 0, 0, 0, 0,
                           0, 0, 0, 0, 0, 0, 0, 0, 0,
                           0, 0, 0, 0, 0, 0, 0, 0, 0,
-                         0, 0, 0, 0, 0, 0, 0, 0, 0]
+                          0, 0, 0, 0, 0, 0, 0, 0, 0]
 
 #-----------------------------
 # Utility functions
@@ -257,11 +262,13 @@ def fitness_cromossome_sum_of_sum(individual):
     return CROMO_FIT_SOL_DEFINED -((sum_lines + sum_columns + sum_boxes)/2)
 
 def fitness_cromossome(individual):
-    fitnessFunction = [ fitness_cromossome_sum,
-                        fitness_cromossome_sum_of_sum,
-                        fitness_calculated,
-                        ]
-    return fitnessFunction[2](individual)
+    global fitness_calls
+    fitnessFunction = { 'sum':fitness_cromossome_sum,
+                        SUM_OF_SUM:fitness_cromossome_sum_of_sum,
+                        CALCULATED:fitness_calculated,
+                        }
+    fitness_calls += 1
+    return fitnessFunction[FITNESS](individual)
 
 def crossover_uniform(population, individual1, individual2):
     newindividual1 = {CROMO_NAME:[0]*CROMO_LEN, CROMO_FIT:CROMO_FIT_INV}
@@ -365,18 +372,24 @@ def crossover_cromossome(population, individual1, individual2):
     crossoverFunciton = [   crossover_one_point,
                             crossover_uniform,
                             crossover_uniform_line,
-                            crossover_uniform_column,
-                            crossover_one_point_line,
-                            crossover_one_line,
-                            crossover_one_column,
+                            #crossover_uniform_column,
+                            #crossover_one_point_line,
+                            #crossover_one_line,
+                            #crossover_one_column,
                             crossover_one_box,
                             ]
     choice(crossoverFunciton)(population, individual1, individual2)
+    crossoverFunciton[0](population, individual1, individual2)
+    crossoverFunciton[1](population, individual1, individual2)
+    crossoverFunciton[2](population, individual1, individual2)
+
+    crossoverFunciton[3](population, individual1, individual2)
+    #crossoverFunciton[4](population, individual1, individual2)
 
 def mutation_reset(individual):
     cromossome = copy.deepcopy(given_cromossome)
     for x in range(CROMO_LEN):
-        if cromossome[x]==0:
+        if cromossome[x]==0 or cromossome[x]=='.':
             cromossome[x] = randint(1,N)
     population.append({CROMO_NAME:cromossome, CROMO_FIT:CROMO_FIT_INV})
 
@@ -500,14 +513,17 @@ def mutation_multi_values(individual):
 def mutation_cromossome(individual):
     mutationMethods = [mutation_reset,
                        mutation_rotate,
-                       #mutation_bit_wise,
+                       mutation_bit_wise,
                        #mutation_multi_values,
-                       mutation_swap_2_line,
-                       mutation_swap_3_line,
-                       mutation_swap_lines,
+                       #mutation_swap_2_line,
+                       #mutation_swap_3_line,
+                       #mutation_swap_lines,
                        #mutation_swap_columns',
                        ]
     choice(mutationMethods)(individual)
+    mutationMethods[0](individual)
+    mutationMethods[1](individual)
+    mutationMethods[2](individual)
 
 
 #-----------------------------
@@ -551,13 +567,13 @@ def init_population_random(population):
     [population.append({CROMO_NAME:[randint(1,N) for x in range(CROMO_LEN)], CROMO_FIT:CROMO_FIT_INV}) for i in range(POP_LEN)]
 
 def init_population(population):
-    init = [init_population_random,
-            init_population_with_constraint,
-            init_population_random_with_given_cromossome,
-            init_population_with_constraint_with_given_cromossome
-            ]
+    init = {'R':init_population_random,
+            'C':init_population_with_constraint,
+            RANDOM:init_population_random_with_given_cromossome,
+            CONSTRAINT:init_population_with_constraint_with_given_cromossome
+            }
 
-    init[2](population)
+    init[INIT](population)
 
 def selection_tournament(population):
     newpopulation = []
@@ -573,7 +589,15 @@ def selection_population(population):
     spopulation = sorted(population, key=itemgetter(CROMO_FIT))
     #print(str(spopulation[0][CROMO_NAME]))
     if BEST_K_SELECTION >= 1:
-        newpopulation.extend(spopulation[:BEST_K_SELECTION])
+        inserted = 1
+        last = spopulation[0]
+        for k in spopulation[1:]:
+            if last[CROMO_NAME] != k[CROMO_NAME]:
+                newpopulation.append(k)
+                inserted += 1
+                last = k
+            if inserted >= BEST_K_SELECTION:
+                break
     if WORST_K_SELECTION >= 1:
         newpopulation.extend(spopulation[-WORST_K_SELECTION:])
     newpopulation.extend(selection_tournament(population))
@@ -638,8 +662,9 @@ def remove_duplicates_columns(population):
                         break
 
 def remove_duplicates(population):
-    remove_duplicates_lines(population)
-    remove_duplicates_columns(population)
+    if REMOVE==True:
+        remove_duplicates_lines(population)
+        remove_duplicates_columns(population)
     return
 
 def found_solution(population):
@@ -657,12 +682,15 @@ def print_parameters(param):
 
 def save_data(times, x, i, param):
     f = open(str(x)+'data.txt', 'a')
-    f.write(str(({'times':times},{'iteration':i},param)))
+    f.write(str(({'times':times},{'iteration':i},param, {'fitness_calls':fitness_calls})) + '\n')
+    print(({'times':times},{'iteration':i},param, {'fitness_calls':fitness_calls}))
     f.close()
 
 def sudoku_solver(times, idx, param):
+    global fitness_calls
     bestValue = 0
     restartCount = 0
+    fitness_calls = 0
     population = []
     init_population(population)
     remove_duplicates(population)
@@ -682,18 +710,22 @@ def sudoku_solver(times, idx, param):
             save_data(times, idx, i, param)
             break
         else:
-            if bestValue == population[0][CROMO_FIT]:
+            if bestValue == statistics[2]:
                 restartCount = restartCount + 1
             else:
                 restartCount = 0
-                bestValue = population[0][CROMO_FIT]
+                bestValue = statistics[2]
 
         if restartCount == RESTART_VALUE:
             restartCount = 0
             population = []
             init_population(population)
 
-idx = -1
+def from_file(filename, sep='\n'):
+    "Parse a file into a list of strings, separated by sep."
+    return [[0 if x=='.' else int(x) for x in l]for l in file(filename).read().strip().split(sep)]
+
+idx = 2
 params = parameters[idx]
 
 POP_LEN = params[POPULATION]
@@ -701,13 +733,21 @@ GENERATIONS_LEN = params[GENERATIONS]
 MUTAT_RATE = params[MUTATION_PROB]
 CROSS_RATE = params[CROSSOVER_PROB]
 TOURNAMENT_SIZE = params[TOURNAMENT]
+FITNESS = params[FITNESS_F]
+REMOVE = params[REMOVE_DUP]
+INIT = params[INIT_POP]
 
-BEST_K_SELECTION = int(POP_LEN * BEST_K_PERCENTAGE)
-WORST_K_SELECTION = int(POP_LEN * WORST_K_PERCENTAGE)
+BEST_K_SELECTION = 10#int(POP_LEN * BEST_K_PERCENTAGE)
+WORST_K_SELECTION = 0#10#int(POP_LEN * WORST_K_PERCENTAGE)
 TOURNAMENT_SELECTION = int(POP_LEN * TOURNAMENT_PERCENTAGE)
 
-for times in range(1,10):
-    sudoku_solver(times,idx, params)
+for s in from_file('./tests/9x9-medio.txt'):
+#for s in from_file('./tests/top95.txt'):
+    given_cromossome = s
+    #given_cromossome = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    print(params, {'restart':RESTART_VALUE}, )
+    for times in range(0,5):
+        sudoku_solver(times,idx, params)
 
 
 
